@@ -3,6 +3,17 @@ import layout from '../templates/components/carousel-container';
 
 const { computed, on, run } = Ember;
 
+function setDefaultActiveObject() {
+  if (!this.isDestroyed && !this.isDestroying && this.get('carouselItems.length')){
+    const carouselItems = this.get('carouselItems');
+    carouselItems.forEach((item, index) => {
+      item.set('index', index);
+    });
+    const firstItem = carouselItems.get('firstObject');
+    firstItem.set('isActive', true);
+  }
+}
+
 export default Ember.Component.extend({
   layout: layout,
   classNames: ['carousel-container'],
@@ -17,10 +28,8 @@ export default Ember.Component.extend({
     this.set('carouselItems', Ember.A());
   }),
 
-  activeCarouselItem: computed('carouselItems.length', 'carouselItems.@each.isActive', {
-    get() {
-      return this.get('carouselItems').findBy('isActive');
-    }
+  activeCarouselItem: computed('carouselItems.[]', 'carouselItems.@each.isActive', function() {
+    return this.get('carouselItems').findBy('isActive');
   }),
 
   registerCarouselItem(carouselItem) {
@@ -30,6 +39,8 @@ export default Ember.Component.extend({
   slide(newActiveIndex, direction) {
     var carouselItems = this.get('carouselItems');
     var activeCarouselItem = this.get('activeCarouselItem');
+    if (!activeCarouselItem || !carouselItems.get('length')) { return; }
+
     var newActiveCarouselItem = carouselItems[newActiveIndex];
     let transitionInterval = this.get('transition-interval');
     let transitionOffset = 50;
@@ -79,5 +90,13 @@ export default Ember.Component.extend({
     }
 
     this.slide(newActiveIndex, 'left');
+  },
+
+  removeCarouselItem(carouselItem) {
+    const isRemovedItemActive = carouselItem.get('isActive');
+    this.get('carouselItems').removeObject(carouselItem);
+    if (isRemovedItemActive) {
+      Ember.run.debounce(this, setDefaultActiveObject, 250);
+    }
   }
 });

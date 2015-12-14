@@ -22,10 +22,15 @@ export default Ember.Component.extend({
     }
   }),
 
-  registerOnCarosuelBody: on('init', function() {
+  registerOnCarouselBody: on('init', function() {
     const carouselContainer = this.nearestWithProperty('isCarouselParentContainer');
     this.set('_carouselContainer', carouselContainer);
     carouselContainer.registerCarouselItem(this);
     this.set('index', carouselContainer.get('totalCarouselItems') - 1);
-  })
+  }),
+
+  willDestroyElement(){
+    const carouselContainer = this.get('_carouselContainer');
+    carouselContainer.removeCarouselItem(this);
+  }
 });
